@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private void initUI() {
          vp_content =(ViewPager) findViewById(R.id.vp_content);
          tab =(TabLayout) findViewById(R.id.tab);
+         tab.setTabGravity(TabLayout.GRAVITY_FILL);
          tab.setTabTextColors(Color.WHITE,Color.RED);
           myAdapter=new MyAdapter(getSupportFragmentManager());
     }
