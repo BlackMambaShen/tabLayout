@@ -9,7 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-public class BaseFragment extends Fragment {
+public abstract class BaseFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -17,4 +17,6 @@ public class BaseFragment extends Fragment {
         view.setText(getClass().getSimpleName());
         return view;
     }
+
+    public abstract void initData();
 }
