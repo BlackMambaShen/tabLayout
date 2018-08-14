@@ -2,8 +2,6 @@ package com.example.liang.tablayout;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.DividerItemDecoration;
@@ -64,7 +62,7 @@ public class QiaotunFragment extends BaseFragment {
         try {
             JSONObject jo=new JSONObject(result);
             JSONArray ja = jo.getJSONArray("results");
-            ArrayList<girlInfo> infos = new ArrayList<>();
+            ArrayList<girlInfo> infos = new ArrayList<girlInfo>();
             for (int i = 0; i <ja.length() ; i++) {
                 JSONObject jo1 = ja.getJSONObject(i);
                 girlInfo info=new girlInfo();
@@ -126,8 +124,8 @@ public class QiaotunFragment extends BaseFragment {
             ImageView iv_girl;
             public MyHolder(View itemView) {
                 super(itemView);
-                tv_girl=itemView.findViewById(R.id.tv_girl);
-                iv_girl=itemView.findViewById(R.id.iv_girl);
+                tv_girl=(TextView) itemView.findViewById(R.id.tv_girl);
+                iv_girl=(ImageView) itemView.findViewById(R.id.iv_girl);
             }
         }
     }
