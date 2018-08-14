@@ -1,6 +1,7 @@
 package com.example.liang.tablayout;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -30,6 +31,7 @@ import okhttp3.Response;
 
 public class QiaotunFragment extends BaseFragment {
     private RecyclerView rv_qiaotun;
+    private ArrayList<girlInfo> infos;
 
     @Override
     public void initData() {
@@ -47,11 +49,12 @@ public class QiaotunFragment extends BaseFragment {
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        ArrayList<girlInfo> infos = processData(result);
-                        rv_qiaotun.setAdapter(new MyAdapter(getContext(),infos));
-                        rv_qiaotun.addItemDecoration(new DividerItemDecoration(getContext(),DividerItemDecoration.VERTICAL));
+                        infos = processData(result);
                         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
                         rv_qiaotun.setLayoutManager(layoutManager);
+                        rv_qiaotun.addItemDecoration(new DividerItemDecoration(global.getContext(),DividerItemDecoration.VERTICAL));
+                        MyAdapter myAdapter = new MyAdapter(global.getContext(), infos);
+                        rv_qiaotun.setAdapter(myAdapter);
                     }
                 });
             }
@@ -67,9 +70,11 @@ public class QiaotunFragment extends BaseFragment {
                 JSONObject jo1 = ja.getJSONObject(i);
                 girlInfo info=new girlInfo();
                 info.who=jo1.getString("who");
+//                System.out.println("谁："+info.who);
                 info.url=jo1.getString("url");
                 infos.add(info);
             }
+//            System.out.println("小凉："+infos.toString());
             return infos;
         } catch (Exception e) {
             e.printStackTrace();
@@ -110,7 +115,7 @@ public class QiaotunFragment extends BaseFragment {
 
         @Override
         public void onBindViewHolder(@NonNull MyHolder holder, int position) {
-                holder.tv_girl.setText(mList.get(position).who);
+            holder.tv_girl.setText(mList.get(position).who);
             Glide.with(mContext).load(mList.get(position).url).into(holder.iv_girl);
         }
 
