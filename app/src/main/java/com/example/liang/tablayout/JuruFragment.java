@@ -46,7 +46,7 @@ public class JuruFragment extends BaseFragment {
              @Override
              public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                  super.onScrollStateChanged(recyclerView, newState);
-                 if (newState==RecyclerView.SCROLL_STATE_IDLE&&lastVisibleItemPosition==myAdapter.getItemCount()){
+                 if (newState==RecyclerView.SCROLL_STATE_IDLE&&lastVisibleItemPosition+1==myAdapter.getItemCount()){
                      List<String> footDatas=new ArrayList<String>();
                      for (int i = 0; i <10 ; i++) {
                          footDatas.add("我是您的女仆~~"+i);
