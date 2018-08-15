@@ -32,7 +32,6 @@ import okhttp3.Response;
 
 public class QiaotunFragment extends BaseFragment {
     private RecyclerView rv_qiaotun;
-    private ArrayList<girlInfo> infos;
 
     @Override
     public void initData() {
@@ -51,11 +50,11 @@ public class QiaotunFragment extends BaseFragment {
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        infos = processData(result);
+                        ArrayList<girlInfo> infos = processData(result);
                         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
                         rv_qiaotun.setLayoutManager(layoutManager);
-                        rv_qiaotun.addItemDecoration(new DividerItemDecoration(global.getContext(),DividerItemDecoration.VERTICAL));
-                        MyAdapter myAdapter = new MyAdapter(global.getContext(), infos);
+                        rv_qiaotun.addItemDecoration(new DividerItemDecoration(getContext(),DividerItemDecoration.VERTICAL));
+                        MyAdapter myAdapter = new MyAdapter(getContext(), infos);
                         rv_qiaotun.setAdapter(myAdapter);
                     }
                 });
@@ -66,14 +65,14 @@ public class QiaotunFragment extends BaseFragment {
     private ArrayList<girlInfo> processData(String result) {
         try {
             JSONObject jo=new JSONObject(result);
-            JSONArray ja = jo.getJSONArray("results");
+            JSONArray ja = jo.getJSONArray("data");
             ArrayList<girlInfo> infos = new ArrayList<girlInfo>();
             for (int i = 0; i <ja.length() ; i++) {
                 JSONObject jo1 = ja.getJSONObject(i);
                 girlInfo info=new girlInfo();
-                info.who=jo1.getString("who");
+                info.abs=jo1.getString("abs");
 //                System.out.println("谁："+info.who);
-                info.url=jo1.getString("url");
+                info.image_url=jo1.getString("image_url");
                 infos.add(info);
             }
 //            System.out.println("小凉："+infos.toString());
@@ -117,8 +116,8 @@ public class QiaotunFragment extends BaseFragment {
 
         @Override
         public void onBindViewHolder(@NonNull MyHolder holder, int position) {
-            holder.tv_girl.setText(mList.get(position).who);
-            Glide.with(mContext).load(mList.get(position).url).into(holder.iv_girl);
+            holder.tv_girl.setText(mList.get(position).abs);
+            Glide.with(mContext).load(mList.get(position).image_url).into(holder.iv_girl);
         }
 
         @Override
