@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,12 +41,13 @@ public class QiaotunFragment extends BaseFragment {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-
+                    System.out.println("你麻痹"+e);
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 final String result = response.body().string();
+                Log.d("QiaotunFragment",result);
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -133,5 +135,6 @@ public class QiaotunFragment extends BaseFragment {
                 iv_girl=(ImageView) itemView.findViewById(R.id.iv_girl);
             }
         }
+
     }
 }
