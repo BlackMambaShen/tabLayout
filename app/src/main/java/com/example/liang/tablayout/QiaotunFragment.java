@@ -1,7 +1,7 @@
 package com.example.liang.tablayout;
 
 import android.content.Context;
-import android.os.AsyncTask;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -16,12 +16,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import domain.girlInfo;
 import okhttp3.Call;
@@ -32,7 +31,8 @@ import okhttp3.Response;
 
 public class QiaotunFragment extends BaseFragment {
     private RecyclerView rv_qiaotun;
-
+    private MyAdapter myAdapter;
+    private int count=0;
     @Override
     public void initData() {
         OkHttpClient client=new OkHttpClient();
@@ -40,7 +40,6 @@ public class QiaotunFragment extends BaseFragment {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                    System.out.println("你麻痹"+e);
             }
 
             @Override
@@ -50,11 +49,11 @@ public class QiaotunFragment extends BaseFragment {
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        ArrayList<girlInfo> infos = processData(result);
+                        ArrayList<girlInfo.PicData> picData = processData(result);
                         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
                         rv_qiaotun.setLayoutManager(layoutManager);
                         rv_qiaotun.addItemDecoration(new DividerItemDecoration(getContext(),DividerItemDecoration.VERTICAL));
-                        MyAdapter myAdapter = new MyAdapter(getContext(), infos);
+                         myAdapter = new MyAdapter(getContext(), picData);
                         rv_qiaotun.setAdapter(myAdapter);
                     }
                 });
@@ -62,21 +61,24 @@ public class QiaotunFragment extends BaseFragment {
         });
     }
 
-    private ArrayList<girlInfo> processData(String result) {
+    private ArrayList<girlInfo.PicData> processData(String result) {
         try {
-            JSONObject jo=new JSONObject(result);
-            JSONArray ja = jo.getJSONArray("data");
-            ArrayList<girlInfo> infos = new ArrayList<girlInfo>();
-            for (int i = 0; i <ja.length() ; i++) {
-                JSONObject jo1 = ja.getJSONObject(i);
-                girlInfo info=new girlInfo();
-                info.abs=jo1.getString("abs");
-//                System.out.println("谁："+info.who);
-                info.image_url=jo1.getString("image_url");
-                infos.add(info);
-            }
-//            System.out.println("小凉："+infos.toString());
-            return infos;
+//            JSONObject jo=new JSONObject(result);
+//            JSONArray ja = jo.getJSONArray("data");
+//            System.out.println("ja"+ja);
+//            ArrayList<girlInfo> infos = new ArrayList<girlInfo>();
+//            for (int i = 0; i <ja.length() ; i++) {
+//                JSONObject jo1 = ja.getJSONObject(i);
+//                System.out.println(jo1);
+//                girlInfo info=new girlInfo();
+//                info.abs=jo1.getString("abs");
+//                info.image_url=jo1.getString("image_url");
+//                infos.add(info);
+//            }
+//            System.out.println("数据："+infos.toString());
+            Gson gson=new Gson();
+            girlInfo girlInfo = gson.fromJson(result, girlInfo.class);
+            return girlInfo.data;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -89,6 +91,46 @@ public class QiaotunFragment extends BaseFragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.layout_qiaotun, null);
         rv_qiaotun = (RecyclerView)view.findViewById(R.id.rv_qiaotun);
+        rv_qiaotun.setOnScrollListener(new RecyclerView.OnScrollListener() {
+            public int lastVisibleItemPosition;
+
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState==RecyclerView.SCROLL_STATE_IDLE&&lastVisibleItemPosition+1==myAdapter.getItemCount()){
+                    OkHttpClient client=new OkHttpClient();
+                    Request request=new Request.Builder().url("http://image.baidu.com/channel/listjson?pn="+count+"&rn=30&tag1=%E7%BE%8E%E5%A5%B3&tag2=%E5%85%A8%E9%83%A8&ftags=%E6%A0%A1%E8%8A%B1&ie=utf8").build();
+                    client.newCall(request).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                        }
+
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            final String result = response.body().string();
+                            final ArrayList<girlInfo.PicData> picData = processData(result);
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    myAdapter.mList.addAll(picData);
+                                    myAdapter.notifyDataSetChanged();
+                                }
+                            });
+                        }
+                    });
+                }
+                count++;
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                LinearLayoutManager layoutManager = (LinearLayoutManager) rv_qiaotun.getLayoutManager();
+                 lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
+            }
+        });
+
+
         return view;
     }
 
@@ -101,8 +143,8 @@ public class QiaotunFragment extends BaseFragment {
     class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyHolder>{
         private LayoutInflater mInflater;
         private Context mContext;
-        private ArrayList<girlInfo>mList;
-        public MyAdapter(Context context,ArrayList<girlInfo>list){
+        private ArrayList<girlInfo.PicData>mList;
+        public MyAdapter(Context context,ArrayList<girlInfo.PicData>list){
             mContext=context;
             mInflater=LayoutInflater.from(mContext);
             mList=list;
@@ -115,9 +157,18 @@ public class QiaotunFragment extends BaseFragment {
         }
 
         @Override
-        public void onBindViewHolder(@NonNull MyHolder holder, int position) {
+        public void onBindViewHolder(@NonNull MyHolder holder, final int position) {
             holder.tv_girl.setText(mList.get(position).abs);
             Glide.with(mContext).load(mList.get(position).image_url).into(holder.iv_girl);
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent=new Intent(getActivity(),GirlActivity.class);
+                    intent.putExtra("abs",mList.get(position).abs);
+                    intent.putExtra("image_url",mList.get(position).image_url);
+                    startActivity(intent);
+                }
+            });
         }
 
         @Override
@@ -125,6 +176,11 @@ public class QiaotunFragment extends BaseFragment {
             return mList.size();
         }
 
+        public void addFootItem(List<girlInfo.PicData>item){
+            mList.addAll(item);
+            notifyDataSetChanged();
+
+        }
         class MyHolder extends RecyclerView.ViewHolder{
             TextView tv_girl;
             ImageView iv_girl;
