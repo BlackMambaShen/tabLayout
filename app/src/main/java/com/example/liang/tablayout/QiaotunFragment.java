@@ -1,11 +1,16 @@
 package com.example.liang.tablayout;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.ParcelUuid;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -34,6 +39,8 @@ public class QiaotunFragment extends BaseFragment {
     private RecyclerView rv_qiaotun;
     private MyAdapter myAdapter;
     private int count=0;
+    private ArrayList<ImageView> list;
+    private Handler handler;
     @Override
     public void initData() {
         OkHttpClient client=new OkHttpClient();
@@ -138,6 +145,13 @@ public class QiaotunFragment extends BaseFragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        int[] arr = {R.drawable.pre19, R.drawable.after19, R.drawable.light, R.drawable.old};
+        list=new ArrayList<ImageView>();
+        for (int i = 0; i <4 ; i++) {
+            ImageView view=new ImageView(getContext());
+            view.setImageResource(arr[i]);
+            list.add(view);
+        }
         initData();
     }
 
@@ -152,6 +166,7 @@ public class QiaotunFragment extends BaseFragment {
         }
         public static final int ITEM_TYPE_IMAGE=0;
         public static final int ITEM_TYPE_TEXT=1;
+        public static final int ITEM_TYPE_VP=2;
 
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             switch (viewType){
@@ -163,12 +178,17 @@ public class QiaotunFragment extends BaseFragment {
                     View view1 = mInflater.inflate(R.layout.item_text, parent, false);
                     MyTextHolder myTextHolder = new MyTextHolder(view1);
                     return myTextHolder;
+                case ITEM_TYPE_VP:
+                    View view2 = mInflater.inflate(R.layout.item_vp, parent, false);
+                    MyViewPagerHolder myViewPagerHolder=new MyViewPagerHolder(view2);
+                    return myViewPagerHolder;
             }
             return null;
         }
 
+        @SuppressLint("HandlerLeak")
         @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position) {
+        public void onBindViewHolder(@NonNull final RecyclerView.ViewHolder holder, final int position) {
             if (holder instanceof MyHolder){
                 ((MyHolder)holder).tv_girl.setText(mList.get(position).abs);
                 Glide.with(mContext).load(mList.get(position).image_url).into(((MyHolder)holder).iv_girl);
@@ -183,6 +203,23 @@ public class QiaotunFragment extends BaseFragment {
                 });
             }else if (holder instanceof MyTextHolder){
                 ((MyTextHolder) holder).tv_text.setText("沈龙昊，我真的好喜欢你！和我在一起吧！");
+            }else if (holder instanceof MyViewPagerHolder){
+                ((MyViewPagerHolder) holder).vp_girl.setAdapter(new MyViewAdapter());
+                if (handler==null){
+                    handler=new Handler(){
+                        @Override
+                        public void handleMessage(Message msg) {
+                            int currentItem = ((MyViewPagerHolder)holder).vp_girl.getCurrentItem();
+                            currentItem++;
+                            if (currentItem>list.size()-1){
+                                currentItem=0;
+                            }
+                            ((MyViewPagerHolder) holder).vp_girl.setCurrentItem(currentItem);
+                            handler.sendEmptyMessageDelayed(0,5000);
+                        }
+                    };
+                    handler.sendEmptyMessageDelayed(0,5000);
+                }
             }
         }
 
@@ -193,7 +230,9 @@ public class QiaotunFragment extends BaseFragment {
 
         @Override
         public int getItemViewType(int position) {
-            if (position<5){
+            if (position==0){
+                return ITEM_TYPE_VP;
+            }else if (position>0&&position<5){
                 return ITEM_TYPE_TEXT;
             }else {
                 return ITEM_TYPE_IMAGE;
@@ -223,5 +262,38 @@ public class QiaotunFragment extends BaseFragment {
             }
         }
 
+        class MyViewPagerHolder extends RecyclerView.ViewHolder{
+            ViewPager vp_girl;
+            public MyViewPagerHolder(View itemView) {
+                super(itemView);
+                vp_girl=(ViewPager) itemView.findViewById(R.id.vp_girl);
+            }
+        }
+
+        class MyViewAdapter extends PagerAdapter{
+
+            @Override
+            public int getCount() {
+                return list.size();
+            }
+
+            @Override
+            public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
+                return view==object;
+            }
+
+            @Override
+            public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
+                container.removeView((View) object);
+            }
+
+            @NonNull
+            @Override
+            public Object instantiateItem(@NonNull ViewGroup container, int position) {
+                ImageView view = list.get(position);
+                container.addView(view);
+                return view;
+            }
+        }
     }
 }
