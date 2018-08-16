@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.ParcelUuid;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.PagerAdapter;
@@ -16,8 +17,10 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -41,6 +44,11 @@ public class QiaotunFragment extends BaseFragment {
     private int count=0;
     private ArrayList<ImageView> list;
     private Handler handler;
+    private String[] data;
+    private int STATE_IDEL=0;
+    private int STATE_LOADING=1;
+    private int currentType=STATE_IDEL;
+
     @Override
     public void initData() {
         OkHttpClient client=new OkHttpClient();
@@ -53,7 +61,6 @@ public class QiaotunFragment extends BaseFragment {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 final String result = response.body().string();
-                Log.d("QiaotunFragment",result);
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -97,49 +104,48 @@ public class QiaotunFragment extends BaseFragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.layout_qiaotun, null);
-        rv_qiaotun = (RecyclerView)view.findViewById(R.id.rv_qiaotun);
+            View view = inflater.inflate(R.layout.layout_qiaotun, null);
+            rv_qiaotun = (RecyclerView)view.findViewById(R.id.rv_qiaotun);
         rv_qiaotun.setOnScrollListener(new RecyclerView.OnScrollListener() {
-            public int lastVisibleItemPosition;
+                public int lastVisibleItemPosition;
 
-            @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                if (newState==RecyclerView.SCROLL_STATE_IDLE&&lastVisibleItemPosition+1==myAdapter.getItemCount()){
-                    OkHttpClient client=new OkHttpClient();
-                    Request request=new Request.Builder().url("http://image.baidu.com/channel/listjson?pn="+count+"&rn=30&tag1=%E7%BE%8E%E5%A5%B3&tag2=%E5%85%A8%E9%83%A8&ftags=%E6%A0%A1%E8%8A%B1&ie=utf8").build();
-                    client.newCall(request).enqueue(new Callback() {
-                        @Override
-                        public void onFailure(Call call, IOException e) {
-                        }
+                @Override
+                public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                    super.onScrollStateChanged(recyclerView, newState);
+                    if (newState==RecyclerView.SCROLL_STATE_IDLE&&lastVisibleItemPosition+1==myAdapter.getItemCount()){
+                        OkHttpClient client=new OkHttpClient();
+                        Request request=new Request.Builder().url("http://image.baidu.com/channel/listjson?pn="+count+"&rn=30&tag1=%E7%BE%8E%E5%A5%B3&tag2=%E5%85%A8%E9%83%A8&ftags=%E6%A0%A1%E8%8A%B1&ie=utf8").build();
+                        client.newCall(request).enqueue(new Callback() {
+                            @Override
+                            public void onFailure(Call call, IOException e) {
+                            }
 
-                        @Override
-                        public void onResponse(Call call, Response response) throws IOException {
-                            final String result = response.body().string();
-                            final ArrayList<girlInfo.PicData> picData = processData(result);
-                            getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    myAdapter.mList.addAll(picData);
-                                    myAdapter.notifyDataSetChanged();
-                                }
-                            });
-                        }
-                    });
+                            @Override
+                            public void onResponse(Call call, Response response) throws IOException {
+                                final String result = response.body().string();
+                                final ArrayList<girlInfo.PicData> picData = processData(result);
+                                getActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        myAdapter.mList.addAll(picData);
+                                        myAdapter.notifyDataSetChanged();
+                                    }
+                                });
+                            }
+                        });
+                    }
+                    count++;
                 }
-                count++;
-            }
 
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                LinearLayoutManager layoutManager = (LinearLayoutManager) rv_qiaotun.getLayoutManager();
-                 lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
-            }
-        });
+                @Override
+                public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+                    LinearLayoutManager layoutManager = (LinearLayoutManager) rv_qiaotun.getLayoutManager();
+                    lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
+                }
+            });
+            return view;
 
-
-        return view;
     }
 
     @Override
@@ -153,6 +159,7 @@ public class QiaotunFragment extends BaseFragment {
             list.add(view);
         }
         initData();
+        data = new String[]{"穿衣", "脱衣", "花灯", "老头"};
     }
 
     class MyAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
@@ -205,6 +212,23 @@ public class QiaotunFragment extends BaseFragment {
                 ((MyTextHolder) holder).tv_text.setText("沈龙昊，我真的好喜欢你！和我在一起吧！");
             }else if (holder instanceof MyViewPagerHolder){
                 ((MyViewPagerHolder) holder).vp_girl.setAdapter(new MyViewAdapter());
+                ((MyViewPagerHolder) holder).tv_vp.setText(data[0]);
+                ((MyViewPagerHolder) holder).vp_girl.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+                    @Override
+                    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+                    }
+
+                    @Override
+                    public void onPageSelected(int position) {
+                        ((MyViewPagerHolder) holder).tv_vp.setText(data[position]);
+                    }
+
+                    @Override
+                    public void onPageScrollStateChanged(int state) {
+
+                    }
+                });
                 if (handler==null){
                     handler=new Handler(){
                         @Override
@@ -264,9 +288,11 @@ public class QiaotunFragment extends BaseFragment {
 
         class MyViewPagerHolder extends RecyclerView.ViewHolder{
             ViewPager vp_girl;
+            TextView tv_vp;
             public MyViewPagerHolder(View itemView) {
                 super(itemView);
                 vp_girl=(ViewPager) itemView.findViewById(R.id.vp_girl);
+                tv_vp=(TextView) itemView.findViewById(R.id.tv_vp);
             }
         }
 
@@ -291,6 +317,13 @@ public class QiaotunFragment extends BaseFragment {
             @Override
             public Object instantiateItem(@NonNull ViewGroup container, int position) {
                 ImageView view = list.get(position);
+                view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent=new Intent(getActivity(),WebAcitivity.class);
+                        startActivity(intent);
+                    }
+                });
                 container.addView(view);
                 return view;
             }
