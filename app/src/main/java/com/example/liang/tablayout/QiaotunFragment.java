@@ -3,6 +3,7 @@ package com.example.liang.tablayout;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.ParcelUuid;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.DividerItemDecoration;
@@ -140,7 +141,7 @@ public class QiaotunFragment extends BaseFragment {
         initData();
     }
 
-    class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyHolder>{
+    class MyAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
         private LayoutInflater mInflater;
         private Context mContext;
         private ArrayList<girlInfo.PicData>mList;
@@ -149,31 +150,54 @@ public class QiaotunFragment extends BaseFragment {
             mInflater=LayoutInflater.from(mContext);
             mList=list;
         }
+        public static final int ITEM_TYPE_IMAGE=0;
+        public static final int ITEM_TYPE_TEXT=1;
 
-        public MyHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = mInflater.inflate(R.layout.item_qiaotun, parent, false);
-            MyHolder myHolder = new MyHolder(view);
-            return myHolder;
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            switch (viewType){
+                case ITEM_TYPE_IMAGE:
+                    View view = mInflater.inflate(R.layout.item_qiaotun, parent, false);
+                    MyHolder myHolder = new MyHolder(view);
+                    return myHolder;
+                case ITEM_TYPE_TEXT:
+                    View view1 = mInflater.inflate(R.layout.item_text, parent, false);
+                    MyTextHolder myTextHolder = new MyTextHolder(view1);
+                    return myTextHolder;
+            }
+            return null;
         }
 
         @Override
-        public void onBindViewHolder(@NonNull MyHolder holder, final int position) {
-            holder.tv_girl.setText(mList.get(position).abs);
-            Glide.with(mContext).load(mList.get(position).image_url).into(holder.iv_girl);
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent=new Intent(getActivity(),GirlActivity.class);
-                    intent.putExtra("abs",mList.get(position).abs);
-                    intent.putExtra("image_url",mList.get(position).image_url);
-                    startActivity(intent);
-                }
-            });
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position) {
+            if (holder instanceof MyHolder){
+                ((MyHolder)holder).tv_girl.setText(mList.get(position).abs);
+                Glide.with(mContext).load(mList.get(position).image_url).into(((MyHolder)holder).iv_girl);
+                holder.itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent=new Intent(getActivity(),GirlActivity.class);
+                        intent.putExtra("abs",mList.get(position).abs);
+                        intent.putExtra("image_url",mList.get(position).image_url);
+                        startActivity(intent);
+                    }
+                });
+            }else if (holder instanceof MyTextHolder){
+                ((MyTextHolder) holder).tv_text.setText("沈龙昊，我真的好喜欢你！和我在一起吧！");
+            }
         }
 
         @Override
         public int getItemCount() {
             return mList.size();
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            if (position<5){
+                return ITEM_TYPE_TEXT;
+            }else {
+                return ITEM_TYPE_IMAGE;
+            }
         }
 
         public void addFootItem(List<girlInfo.PicData>item){
@@ -188,6 +212,14 @@ public class QiaotunFragment extends BaseFragment {
                 super(itemView);
                 tv_girl=(TextView) itemView.findViewById(R.id.tv_girl);
                 iv_girl=(ImageView) itemView.findViewById(R.id.iv_girl);
+            }
+        }
+
+        class MyTextHolder extends RecyclerView.ViewHolder{
+            TextView tv_text;
+            public MyTextHolder(View itemView) {
+                super(itemView);
+                tv_text=(TextView) itemView.findViewById(R.id.tv_text);
             }
         }
 
